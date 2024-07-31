@@ -1,0 +1,8 @@
+name: CodeRandom-Core
+version: '1.0-SNAPSHOT'
+main: com.coderandom.cr_core.CRCore
+api-version: '1.21'
+prefix: CR-Core
+load: STARTUP
+authors: [ D4RKJOK3R ]
+description: A core plugin used for CodeRandom plugins.
