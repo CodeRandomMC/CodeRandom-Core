@@ -11,17 +11,13 @@ import java.util.logging.Level;
 public final class CodeRandomCore extends JavaPlugin {
     private static volatile CodeRandomCore instance;
     private static boolean usingMySQL = false;
+    private Economy economy;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
 
-        if (getConfig().getBoolean("MySQL.enabled")) {
-            MySQLManager.initialize(this);
-            if (MySQLManager.getInstance().connect()) {
-                usingMySQL = true;
-            }
-        }
+        initializeMySQL();
 
         if (dependencyCheck("Floodgate")) {
             BedrockUUID.getInstance();
@@ -42,6 +38,15 @@ public final class CodeRandomCore extends JavaPlugin {
         }
     }
 
+    private void initializeMySQL() {
+        if (getConfig().getBoolean("MySQL.enabled")) {
+            MySQLManager.initialize(this);
+            if (MySQLManager.getInstance().connect()) {
+                usingMySQL = true;
+            }
+        }
+    }
+
     public static boolean usingMySQL() {
         return usingMySQL;
     }
@@ -55,13 +60,13 @@ public final class CodeRandomCore extends JavaPlugin {
     }
 
     public Economy getEconomy() {
-        if (dependencyCheck("Vault")) {
+        if (economy == null && dependencyCheck("Vault")) {
             RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
             if (rsp != null) {
-                return rsp.getProvider();
+                economy = rsp.getProvider();
             }
         }
-        return null;
+        return economy;
     }
 
     // Checks if the specified plugin is present
@@ -78,5 +83,4 @@ public final class CodeRandomCore extends JavaPlugin {
         }
         return true;
     }
-
 }

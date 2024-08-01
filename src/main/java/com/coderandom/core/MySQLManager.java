@@ -1,5 +1,7 @@
 package com.coderandom.core;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.plugin.Plugin;
 
 import java.sql.*;
@@ -10,20 +12,9 @@ public final class MySQLManager {
     private static volatile MySQLManager instance;
     private static Plugin plugin;
     private static Logger LOGGER;
-    private final String host;
-    private final String port;
-    private final String database;
-    private final String username;
-    private final String password;
-    private Connection connection;
+    private HikariDataSource dataSource;
 
     private MySQLManager() {
-        this.host = plugin.getConfig().getString("MySQL.host", "localhost");
-        this.port = plugin.getConfig().getString("MySQL.port", "3306");
-        this.database = plugin.getConfig().getString("MySQL.database", "code_random");
-        this.username = plugin.getConfig().getString("MySQL.username", "root");
-        this.password = plugin.getConfig().getString("MySQL.password", "");
-
         LOGGER = plugin.getLogger();
     }
 
@@ -46,61 +37,73 @@ public final class MySQLManager {
         return instance;
     }
 
-    boolean connect() {
+    public boolean connect() {
         try {
-            if (connection != null && !connection.isClosed()) {
+            if (dataSource != null && !dataSource.isClosed()) {
                 return false;
             }
-            String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=false";
-            connection = DriverManager.getConnection(url, username, password);
+            initializeDataSource();
             LOGGER.log(Level.INFO, "Connected to MySQL database.");
             return true;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Could not connect to MySQL database!", e);
             return false;
         }
     }
 
-    void disconnect() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-                LOGGER.log(Level.INFO, "MySQL Disconnected!");
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Could not disconnect from MySQL database!", e);
+    private void initializeDataSource() {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl("jdbc:mysql://" + plugin.getConfig().getString("MySQL.host", "localhost") +
+                ":" + plugin.getConfig().getString("MySQL.port", "3306") +
+                "/" + plugin.getConfig().getString("MySQL.database", "code_random") +
+                "?useSSL=false");
+        config.setUsername(plugin.getConfig().getString("MySQL.username", "root"));
+        config.setPassword(plugin.getConfig().getString("MySQL.password", ""));
+        config.setMaximumPoolSize(10);
+        config.setMinimumIdle(2);
+        config.setIdleTimeout(30000);
+        config.setMaxLifetime(600000);
+        config.setConnectionTimeout(30000);
+
+        this.dataSource = new HikariDataSource(config);
+        LOGGER.log(Level.INFO, "MySQL connection pool initialized.");
+    }
+
+    public void disconnect() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            LOGGER.log(Level.INFO, "MySQL connection pool closed.");
         }
     }
 
-    public Connection getConnection() {
-        try {
-            if (connection == null || connection.isClosed()) {
-                connect();
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Could not reconnect to MySQL database!", e);
-        }
-        return connection;
+    public Connection getConnection() throws SQLException {
+        return dataSource.getConnection();
     }
 
     public ResultSet executeQuery(String query, Object... parameters) throws SQLException {
-        validateConnection();
-        PreparedStatement ps = connection.prepareStatement(query);
-        setParameters(ps, parameters);
-        return ps.executeQuery();
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+            setParameters(ps, parameters);
+            return ps.executeQuery();
+        }
     }
 
     public void executeUpdate(String query, Object... parameters) throws SQLException {
-        validateConnection();
-        PreparedStatement ps = connection.prepareStatement(query);
-        setParameters(ps, parameters);
-        ps.executeUpdate();
-        ps.close();
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+            setParameters(ps, parameters);
+            ps.executeUpdate();
+        }
     }
 
-    private void validateConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            connect();
+    public void executeBatchUpdate(String query, Object[][] parameters) throws SQLException {
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+            for (Object[] parameterSet : parameters) {
+                setParameters(ps, parameterSet);
+                ps.addBatch();
+            }
+            ps.executeBatch();
         }
     }
 
@@ -113,6 +116,7 @@ public final class MySQLManager {
     public void createTables(String tableCreationQuery) {
         try {
             executeUpdate(tableCreationQuery);
+            LOGGER.log(Level.INFO, "Table creation query executed.");
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Could not create table!", e);
         }
