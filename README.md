@@ -141,4 +141,4 @@ This will display an action bar message for 3 seconds (60 ticks).
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is Non-Commercial License with API Usage Exception. See the [LICENSE](LICENSE) file for details.
