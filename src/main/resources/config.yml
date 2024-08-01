@@ -1,7 +1,7 @@
 MySQL:
-  enabled: false
-  host: localhost
-  port: 3306
-  database: code_random
-  username: root
-  password: ""
+  enabled: false        # Enable or disable MySQL support
+  host: localhost       # The MySQL server hostname
+  port: 3306            # The MySQL server port
+  database: code_random # The name of the database to use
+  username: root        # The username for the MySQL server
+  password: ""          # The password for the MySQL server (keep it empty if not required)

@@ -10,11 +10,22 @@ import java.nio.file.StandardCopyOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
+/**
+ * Manages JSON file operations asynchronously and synchronously for a Bukkit plugin.
+ */
 public final class JsonFileManager {
+
     private final Logger LOGGER;
     private final File file;
     private final Gson gson;
 
+    /**
+     * Constructs a JsonFileManager for handling JSON file operations.
+     *
+     * @param plugin   the plugin instance
+     * @param path     the directory path relative to the plugin's data folder
+     * @param fileName the name of the JSON file
+     */
     public JsonFileManager(Plugin plugin, String path, String fileName) {
         File directory;
         if (path == null || path.isEmpty()) {
@@ -22,6 +33,7 @@ public final class JsonFileManager {
         } else {
             directory = new File(plugin.getDataFolder(), path);
         }
+
         this.LOGGER = plugin.getLogger();
         this.file = new File(directory, fileName + ".json");
         this.gson = new GsonBuilder().setPrettyPrinting().create();
@@ -44,6 +56,13 @@ public final class JsonFileManager {
         }
     }
 
+    /**
+     * Copies a file from the JAR resources to the plugin data folder.
+     *
+     * @param path     the directory path relative to the JAR root
+     * @param fileName the name of the file
+     * @return true if the file was successfully copied, false otherwise
+     */
     private boolean copyFileFromJar(String path, String fileName) {
         String resourcePath = path == null || path.isEmpty() ? "/" + fileName + ".json" : "/" + path + "/" + fileName + ".json";
         InputStream resourceStream = getClass().getResourceAsStream(resourcePath);
@@ -66,6 +85,11 @@ public final class JsonFileManager {
         }
     }
 
+    /**
+     * Asynchronously reads the JSON content from the file.
+     *
+     * @return a CompletableFuture containing the JSON content
+     */
     public CompletableFuture<JsonElement> getAsync() {
         return CompletableFuture.supplyAsync(() -> {
             try (Reader reader = new FileReader(file, StandardCharsets.UTF_8)) {
@@ -80,6 +104,12 @@ public final class JsonFileManager {
         });
     }
 
+    /**
+     * Asynchronously writes the JSON content to the file.
+     *
+     * @param jsonElement the JSON content to write
+     * @return a CompletableFuture representing the completion of the write operation
+     */
     public CompletableFuture<Void> setAsync(JsonElement jsonElement) {
         return CompletableFuture.runAsync(() -> {
             try (Writer writer = new FileWriter(file, StandardCharsets.UTF_8, false)) {
@@ -90,6 +120,11 @@ public final class JsonFileManager {
         });
     }
 
+    /**
+     * Synchronously reads the JSON content from the file.
+     *
+     * @return the JSON content
+     */
     public JsonElement getSync() {
         try (Reader reader = new FileReader(file, StandardCharsets.UTF_8)) {
             return JsonParser.parseReader(reader);
@@ -102,9 +137,16 @@ public final class JsonFileManager {
         }
     }
 
+    /**
+     * Deletes the JSON file.
+     */
     public void deleteFile() {
         if (file.exists()) {
-            file.delete();
+            if (file.delete()) {
+                LOGGER.info("File deleted successfully: " + file.getName());
+            } else {
+                LOGGER.severe("Failed to delete the file: " + file.getName());
+            }
         }
     }
 }

@@ -8,7 +8,12 @@ import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Manages MySQL connections using HikariCP connection pool.
+ * Singleton class for database operations.
+ */
 public final class MySQLManager {
+
     private static volatile MySQLManager instance;
     private static Plugin plugin;
     private static Logger LOGGER;
@@ -18,7 +23,12 @@ public final class MySQLManager {
         LOGGER = plugin.getLogger();
     }
 
-    // Package-private to limit access to this method
+    /**
+     * Initializes the MySQLManager singleton instance.
+     *
+     * @param pluginInstance the plugin instance
+     * @throws IllegalStateException if the manager is already initialized
+     */
     static synchronized void initialize(Plugin pluginInstance) {
         if (plugin == null) {
             plugin = pluginInstance;
@@ -30,6 +40,12 @@ public final class MySQLManager {
         }
     }
 
+    /**
+     * Returns the singleton instance of MySQLManager.
+     *
+     * @return the MySQLManager instance
+     * @throws IllegalStateException if the manager is not initialized
+     */
     static synchronized MySQLManager getInstance() {
         if (instance == null) {
             throw new IllegalStateException("MySQLManager is not initialized. Call initialize() first.");
@@ -37,6 +53,11 @@ public final class MySQLManager {
         return instance;
     }
 
+    /**
+     * Connects to the MySQL database using HikariCP.
+     *
+     * @return true if connected successfully, false otherwise
+     */
     public boolean connect() {
         try {
             if (dataSource != null && !dataSource.isClosed()) {
@@ -51,6 +72,9 @@ public final class MySQLManager {
         }
     }
 
+    /**
+     * Initializes the HikariCP data source with the configuration from the plugin.
+     */
     private void initializeDataSource() {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:mysql://" + plugin.getConfig().getString("MySQL.host", "localhost") +
@@ -69,6 +93,9 @@ public final class MySQLManager {
         LOGGER.log(Level.INFO, "MySQL connection pool initialized.");
     }
 
+    /**
+     * Disconnects from the MySQL database by closing the HikariCP data source.
+     */
     public void disconnect() {
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();
@@ -76,10 +103,24 @@ public final class MySQLManager {
         }
     }
 
+    /**
+     * Retrieves a connection from the HikariCP data source.
+     *
+     * @return a SQL connection
+     * @throws SQLException if a database access error occurs
+     */
     public Connection getConnection() throws SQLException {
         return dataSource.getConnection();
     }
 
+    /**
+     * Executes a query with the provided parameters and returns the result set.
+     *
+     * @param query      the SQL query
+     * @param parameters the parameters for the query
+     * @return the result set of the query
+     * @throws SQLException if a database access error occurs
+     */
     public ResultSet executeQuery(String query, Object... parameters) throws SQLException {
         try (Connection connection = getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
@@ -88,6 +129,13 @@ public final class MySQLManager {
         }
     }
 
+    /**
+     * Executes an update with the provided parameters.
+     *
+     * @param query      the SQL query
+     * @param parameters the parameters for the query
+     * @throws SQLException if a database access error occurs
+     */
     public void executeUpdate(String query, Object... parameters) throws SQLException {
         try (Connection connection = getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
@@ -96,6 +144,13 @@ public final class MySQLManager {
         }
     }
 
+    /**
+     * Executes a batch update with the provided parameters.
+     *
+     * @param query      the SQL query
+     * @param parameters the batch parameters for the query
+     * @throws SQLException if a database access error occurs
+     */
     public void executeBatchUpdate(String query, Object[][] parameters) throws SQLException {
         try (Connection connection = getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
@@ -107,12 +162,24 @@ public final class MySQLManager {
         }
     }
 
+    /**
+     * Sets the parameters for a prepared statement.
+     *
+     * @param ps         the prepared statement
+     * @param parameters the parameters to set
+     * @throws SQLException if a database access error occurs
+     */
     private void setParameters(PreparedStatement ps, Object... parameters) throws SQLException {
         for (int i = 0; i < parameters.length; i++) {
             ps.setObject(i + 1, parameters[i]);
         }
     }
 
+    /**
+     * Executes a table creation query.
+     *
+     * @param tableCreationQuery the SQL query to create tables
+     */
     public void createTables(String tableCreationQuery) {
         try {
             executeUpdate(tableCreationQuery);
