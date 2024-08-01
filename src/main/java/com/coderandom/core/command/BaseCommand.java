@@ -1,4 +1,4 @@
-package com.coderandom.cr_core.command;
+package com.coderandom.core.command;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -12,7 +12,6 @@ import org.bukkit.plugin.Plugin;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
 
 public abstract class BaseCommand extends BukkitCommand {
 
@@ -25,12 +24,11 @@ public abstract class BaseCommand extends BukkitCommand {
      * @param usage       the usage message for the command
      * @param description the description of the command
      */
-    protected BaseCommand(Plugin plugin, String command, String[] aliases, String permission, String usage, String description) {
+    public BaseCommand(Plugin plugin, String command, String[] aliases, String permission, String description) {
         super(command);
         setDescription(description);
         setPermission(permission);
-        setUsage(usage);
-        setPermissionMessage(ChatColor.RED + "You don't have " + permission + " to use this command");
+        setUsage('/' + command);
         if (aliases != null) {
             setAliases(Arrays.asList(aliases));
         }

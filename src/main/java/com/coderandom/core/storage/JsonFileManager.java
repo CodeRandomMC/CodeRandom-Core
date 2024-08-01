@@ -1,4 +1,4 @@
-package com.coderandom.cr_core.storage;
+package com.coderandom.core.storage;
 
 import com.google.gson.*;
 import org.bukkit.plugin.Plugin;
@@ -10,7 +10,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
-public class JsonFileManager {
+public final class JsonFileManager {
     private final Logger LOGGER;
     private final File file;
     private final Gson gson;

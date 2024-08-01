@@ -1,8 +1,11 @@
-name: CodeRandom-Core
+name: CodeRandomCore
 version: '1.0-SNAPSHOT'
-main: com.coderandom.cr_core.CRCore
+main: com.coderandom.core.CodeRandomCore
 api-version: '1.21'
-prefix: CR-Core
+prefix: CodeRandomCore
 load: STARTUP
 authors: [ D4RKJOK3R ]
 description: A core plugin used for CodeRandom plugins.
+softdepend:
+  - Vault
+  - Floodgate

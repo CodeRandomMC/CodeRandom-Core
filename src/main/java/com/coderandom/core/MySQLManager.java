@@ -1,4 +1,4 @@
-package com.coderandom.cr_core;
+package com.coderandom.core;
 
 import org.bukkit.plugin.Plugin;
 
@@ -6,7 +6,7 @@ import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class MySQLManager {
+public final class MySQLManager {
     private static volatile MySQLManager instance;
     private static Plugin plugin;
     private static Logger LOGGER;
@@ -15,7 +15,7 @@ public class MySQLManager {
     private final String database;
     private final String username;
     private final String password;
-    protected Connection connection;
+    private Connection connection;
 
     private MySQLManager() {
         this.host = plugin.getConfig().getString("MySQL.host", "localhost");
@@ -24,7 +24,7 @@ public class MySQLManager {
         this.username = plugin.getConfig().getString("MySQL.username", "root");
         this.password = plugin.getConfig().getString("MySQL.password", "");
 
-        this.LOGGER = plugin.getLogger();
+        LOGGER = plugin.getLogger();
     }
 
     // Package-private to limit access to this method
@@ -39,14 +39,14 @@ public class MySQLManager {
         }
     }
 
-    public static synchronized MySQLManager getInstance() {
+    static synchronized MySQLManager getInstance() {
         if (instance == null) {
             throw new IllegalStateException("MySQLManager is not initialized. Call initialize() first.");
         }
         return instance;
     }
 
-    public boolean connect() {
+    boolean connect() {
         try {
             if (connection != null && !connection.isClosed()) {
                 return false;
@@ -61,7 +61,7 @@ public class MySQLManager {
         }
     }
 
-    public void disconnect() {
+    void disconnect() {
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();

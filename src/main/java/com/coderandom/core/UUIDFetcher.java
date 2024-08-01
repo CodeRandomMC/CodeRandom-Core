@@ -1,7 +1,8 @@
-package com.coderandom.cr_core;
+package com.coderandom.core;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.bukkit.Bukkit;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -11,8 +12,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 import java.util.logging.Level;
 
-public class UUIDFetcher {
-    public static UUID getUUID(String playerName) {
+public final class UUIDFetcher {
+    public static UUID getOnlineUUID(String playerName) {
         try {
             URL url = new URL("https://api.mojang.com/users/profiles/minecraft/" + playerName);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -31,11 +32,15 @@ public class UUIDFetcher {
                 ));
             }
         } catch (Exception e) {
-            CRCore.getInstance().getLogger().log(Level.SEVERE, "Error fetching UUID for player: " + playerName, e);
+            CodeRandomCore.getInstance().getLogger().log(Level.SEVERE, "Error fetching UUID for player: " + playerName, e);
         }
         return null;
     }
 
+    public static UUID getFloodgateUUID(String playerName) {
+        // Generate a UUID for Bedrock players using Floodgate's method
+        return UUID.nameUUIDFromBytes(("Floodgate:" + playerName).getBytes());
+    }
 
     public static UUID getOfflineUUID(String playerName) {
         try {
@@ -49,12 +54,19 @@ public class UUIDFetcher {
             for (int i = 8; i < 16; i++) {
                 lsb = (lsb << 8) | (hash[i] & 0xff);
             }
-            lsb = (lsb & ~0xC000) | 0x8000; // set the variant to 2
-            msb = (msb & ~0xF000) | 0x3000; // set the version to 3
+            msb = (msb & 0xFFFFFFFFFFFF0FFFL) | 0x0000000000003000L; // set the version to 3
+            lsb = (lsb & 0x3FFFFFFFFFFFFFFFL) | 0x8000000000000000L; // set the variant to 2
             return new UUID(msb, lsb);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static UUID getUUID(String playerName) {
+        if (playerName.startsWith(".")) {
+            return BedrockUUID.getInstance().getUUID(playerName);
+        }
+        return Bukkit.getOnlineMode() ? getOnlineUUID(playerName) : getOfflineUUID(playerName);
     }
 }
