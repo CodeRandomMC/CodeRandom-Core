@@ -1,4 +1,5 @@
 # CodeRandomCore
+###### Current version `v1.0.0-1.21`
 
 CodeRandomCore is a Bukkit plugin designed to manage various aspects of a Minecraft server, including player UUIDs, MySQL database interactions, and messaging utilities. This guide will help you set up and use the API provided by the plugin.
 
